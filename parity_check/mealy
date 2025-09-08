@@ -1,0 +1,126 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    12:41:04 07/22/2025 
+-- Design Name: 
+-- Module Name:    mealy - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity mea_ly is
+    Port ( input : in  STD_LOGIC_VECTOR (1 downto 0);
+			  clk,rst	 : in STD_LOGIC;
+           output : out  STD_LOGIC);
+end mea_ly;
+
+architecture Behavioral of mea_ly is
+	signal cnt : integer range 0 to 12499999;
+	signal out_sig,clkout : STD_LOGIC;
+	type state is (S0,S1);
+	signal currentstate,nextstate : state ;
+	
+begin
+	clk_2_Hz : process(clk,cnt,rst)
+	begin 
+		if (rst = '0') then
+			cnt <= 0;
+			clkout <= '0';
+		else
+			if (rising_edge(clk)) then
+				if (cnt = 12499999) then
+					cnt <= 0;
+					clkout <= not clkout;
+				else
+					cnt <= cnt + 1;
+					clkout <= clkout;
+				end if;
+			end if;
+		end if;
+	end process;
+	change_state : process(clkout,rst)
+	begin 
+		if (rst = '0') then
+			currentstate <= S0;
+		else
+			if (rising_edge(clkout)) then
+				currentstate <= nextstate ;
+			end if;
+		end if;
+	end process;
+	
+	next_state : process(currentstate,input)
+	begin
+		case currentstate is
+			when S0 =>
+				if (input(1) = '1') then
+					nextstate <= S0;
+				else
+					if (input(0) = '0') then
+						nextstate <= S0;
+					else 
+						nextstate <= S1;
+					end if;
+				end if;
+			when S1 =>
+				if (input(0) = '0') then
+					nextstate <= S1;
+				else
+					nextstate <= S0;
+				end if;
+			when others =>
+				nextstate <= S0;
+		end case;
+	end process;
+						
+	Output_proc : process(currentstate,input)
+	begin
+		case currentstate is
+			when S0 =>
+				if input(1) = '1' then
+					out_sig <= '0';
+				else
+					if input(0) = '0' then
+						out_sig <= '0';
+					else 
+						out_sig <= '1';
+					end if;
+				end if;
+			when S1 =>
+				if input(0) = '0' then
+					out_sig <= '1';
+				else
+					out_sig <= '0';
+				end if;
+			when others =>
+				out_sig <= '0';
+		end case;
+	end process;
+	output <= out_sig;
+end Behavioral;
+
+
+
+
+
