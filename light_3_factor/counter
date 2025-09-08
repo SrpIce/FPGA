@@ -1,0 +1,84 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    08:00:43 08/06/2025 
+-- Design Name: 
+-- Module Name:    counter - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity counter is
+    Port ( clk,rst,cload,cdec : in  STD_LOGIC;
+           cdone,led : out  STD_LOGIC);
+end counter;
+
+architecture Behavioral of counter is
+	type state_type is (c0,c1,c2,c3);
+	signal cntstate,next_cntstate : state_type := c0;
+	signal cdonesig : std_logic;
+begin
+	sync_proc : process(clk, rst)
+    begin
+        if (rst = '0') then
+            cntstate <= c0;
+        elsif (rising_edge(clk)) then
+            case cntstate is
+                when c0 =>
+                    if cload = '0' then
+                        cntstate <= c1;
+                    else
+                        cntstate <= c0;
+                    end if;
+                when c1 => 
+                    if cdec = '1' then
+                        cntstate <= c2;
+                    else
+                        cntstate <= c1;
+                    end if;
+                 when c2 => 
+                    if cdec = '1' then
+                        cntstate <= c3;
+                    else
+                        cntstate <= c2;
+                    end if;
+					  when c3 => 
+                        cntstate <= c3;
+                when others => 
+                    cntstate <= c0;
+            end case;
+        end if;
+    end process;
+	 
+	done_proc	: process(cntstate)
+	 begin
+			case cntstate is
+				when c3 	=> cdonesig <= '1';
+				when others => cdonesig <= '0';
+			end case;
+	 end process;
+	 led <= cdonesig;
+	 cdone <= cdonesig;
+end Behavioral;
+
