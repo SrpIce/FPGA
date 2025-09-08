@@ -1,0 +1,72 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    08:20:20 08/06/2025 
+-- Design Name: 
+-- Module Name:    top_master - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity top_master is
+    Port ( clk,rst : in  STD_LOGIC;
+           ledcnt,ledlight,ledclk : out  STD_LOGIC);
+end top_master;
+
+architecture Behavioral of top_master is
+	component MasterFSM is
+		 Port ( input,clk,rst : in  STD_LOGIC;
+				  tdone,cdone : in  STD_LOGIC;
+				  tload,tsel,cload,cdec : out  STD_LOGIC;
+				  output : out  STD_LOGIC);
+	end component MasterFSM;
+	
+	component clkdiv is
+    Port ( clk,rst : in  STD_LOGIC;
+           ledclk,clkdivide : out  STD_LOGIC);
+	end component clkdiv;
+	
+	component counter is
+    Port ( clk,rst,cload,cdec : in  STD_LOGIC;
+           cdone,led : out  STD_LOGIC);
+	end component counter;
+	
+	component timer is
+    Port ( clk,rst,tload,tsel : in  STD_LOGIC;
+           tdone : out  STD_LOGIC);
+	end component timer;
+	
+	signal cdone,tdone,tload,tsel,cload,cdec,clkout : std_logic;
+begin
+	U1 : MasterFSM
+	port map(clk => clkout,rst => rst,input => '1',cdone => cdone,tdone => tdone,tload => tload,tsel => tsel,cload => cload,cdec => cdec,output => ledlight);
+	U2 : clkdiv 
+	port map(clk => clk,rst => rst,ledclk => ledclk,clkdivide => clkout);
+	U3 : counter
+	port map(clk => clkout,rst => rst,cload => cload,cdec => cdec,cdone => cdone,led => ledcnt);
+	U4 : timer
+	port map(clk => clkout,rst => rst,tload => tload,tsel => tsel,tdone => tdone);
+
+end Behavioral;
+
