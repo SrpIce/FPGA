@@ -1,0 +1,193 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    06:34:34 07/24/2025 
+-- Design Name: 
+-- Module Name:    blinkled - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity blinkled is
+    Port ( input,clk,rst : in  STD_LOGIC;
+           output,led0 : out  STD_LOGIC);
+end blinkled;
+
+architecture Behavioral of blinkled is
+    type state_type is (off, a, b, c, d, e);
+    type timer_type is (done, t1, t2, t3, t4, t5);
+    signal timestate, next_timestate : timer_type := done;
+    signal state, next_state : state_type := off;
+    signal clkout,tsel, tload ,donesig: std_logic;
+    signal cnt : integer range 0 to 12499999 ;
+	 
+begin
+	clkdiv : process(clk,rst,cnt,input)
+    begin
+        if (rst = '0') then
+            cnt <= 0;
+            clkout <= '0';
+        elsif (rising_edge(clk)) then
+            if (cnt = 12499999) then
+                cnt <= 0;
+                clkout <= not clkout;
+            else 
+                cnt <= cnt + 1;
+            end if;
+        end if;
+    end process;
+	
+	syncfsm_proc : process(clkout,rst)
+    begin
+        if (rst = '0') then
+            state <= off;
+        elsif (rising_edge(clkout)) then
+            state <= next_state;
+        end if;
+    end process;
+	
+	synctimer_proc : process(clkout,rst)
+    begin
+        if (rst = '0') then
+            timestate <= done;
+        elsif (rising_edge(clkout)) then
+				timestate <= next_timestate;
+        end if;
+    end process;
+	
+	 fsm_proc : process(state, input, donesig)
+    begin
+        case state is
+            when off => 
+                if (input = '0') then
+                    next_state <= a;
+					 else
+						  next_state <= off;
+                end if;
+            when a => 
+                if (donesig = '1') then
+                    next_state <= b;
+					 else
+						  next_state <= a;
+                end if;
+            when b => 
+                if (donesig = '1') then
+                    next_state <= c;
+					 else
+						  next_state <= b;
+                end if;
+            when c => 
+                if (donesig = '1') then
+                    next_state <= d;
+					 else
+						  next_state <= c;
+                end if;
+            when d => 
+                if (donesig = '1') then
+                    next_state <= e;
+					 else
+						  next_state <= d;
+                end if;
+            when e => 
+                if (donesig = '1') then
+                    next_state <= off;
+					 else
+						  next_state <= e;
+                end if;
+				when others => next_state <= off;
+        end case;
+    end process;
+
+	
+	tsel_proc : process(state,input)
+    begin
+        case state is
+            when off => tsel <= not input;
+            when a => tsel <= '0';
+            when b => tsel <= '1';
+            when c => tsel <= '0';
+            when d => tsel <= '1';
+            when e => tsel <= '0';
+				when others => tsel <= not input;
+        end case;
+    end process;
+	 
+	 tload_proc : process(state,input,donesig)
+	 begin
+        case state is
+            when off => tload <= not input;
+            when a => tload <= donesig;
+            when b => tload <= donesig;
+            when c => tload <= donesig;
+            when d => tload <= donesig;
+            when e => tload <= donesig;
+				when others => tload <= not input;
+        end case;
+    end process;
+	
+	 timer_proc : process(timestate, tload, tsel)
+    begin
+		next_timestate <= timestate;
+        case timestate is
+            when done =>
+                if tload = '1' then
+                    if tsel = '1' then
+                        next_timestate <= t5;
+                    else
+                        next_timestate <= t3;
+                    end if;
+                end if;
+            when t5 => next_timestate <= t4;
+            when t4 => next_timestate <= t3;
+            when t3 => next_timestate <= t2;
+            when t2 => next_timestate <= t1;
+				when t1 => next_timestate <= done;
+				when others => next_timestate <= done;
+        end case;
+    end process;
+	 
+	 done_proc	: process(timestate)
+	 begin
+			case timestate is
+				when done 	=> donesig <= '1';
+				when others => donesig <= '0';
+			end case;
+	 end process;
+	
+	output_proc : process(state)
+    begin
+        case state is
+            when off => output <= '0';
+            when a => output <= '1';
+            when b => output <= '0';
+            when c => output <= '1';
+            when d => output <= '0';
+            when e => output <= '1';
+				when others => output <= '0';
+        end case;
+    end process;
+    
+    led0 <= clkout;
+end Behavioral;
+
