@@ -1,0 +1,63 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    10:11:24 08/13/2025 
+-- Design Name: 
+-- Module Name:    top_tx - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity top_tx is
+    Port ( clk,rst,input : in  STD_LOGIC;
+           txout : out  STD_LOGIC);
+end top_tx;
+
+architecture Behavioral of top_tx is
+	component tx is
+		Port ( clk,rst,input : in  STD_LOGIC;
+				 txout	: out std_logic);
+	end component tx;
+	
+	component buadrate is
+		Port ( clk,rst : in  STD_LOGIC;
+				 clkdiv : out  STD_LOGIC);
+	end component buadrate;
+	
+	component bt_db is
+		Port ( btn ,clk  : in  STD_LOGIC;
+				 btn_db : out  STD_LOGIC);
+	end component bt_db;
+	
+	signal buad,db_btn : std_logic;
+begin
+	U1 : buadrate
+		port map(clk => clk,rst => rst,clkdiv => buad);
+	U2 : bt_db
+		port map(clk => clk,btn => input,btn_db => db_btn);
+	U3 : tx
+		port map(clk => buad,rst => rst,input => db_btn,txout => txout);
+
+end Behavioral;
+
