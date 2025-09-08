@@ -1,0 +1,128 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    08:28:27 08/13/2025 
+-- Design Name: 
+-- Module Name:    tx - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity tx is
+    Port ( clk,rst,input : in  STD_LOGIC;
+			  txout	: out std_logic
+			 );
+end tx;
+
+architecture Behavioral of tx is
+	type state_type is (idle,start,data,stop);
+	signal state,next_state : state_type := idle;
+	signal cnt : integer range 0 to 7 := 0;
+	signal shreg : std_logic_vector(7 downto 0) := (others => '0');
+	signal dts : std_logic_vector(7 downto 0) := x"41";
+	signal tx_reg : std_logic;
+	signal update_char : std_logic := '0';
+	signal stop_char : std_logic := '0';
+begin
+	txout <= tx_reg;
+	
+	sycn_proc :process(clk, rst)
+	begin
+		if (rst = '0') then
+			state <= idle;
+			dts <= x"41";
+			stop_char <= '0';
+		elsif rising_edge(clk) then
+			state <= next_state;
+			if (update_char = '1' and stop_char = '0') then
+				state <= idle;
+				if (dts = x"5A") then
+					dts <= x"41";
+					stop_char <= '1';
+				else
+					dts <= dts + 1;
+				end if;
+			end if;
+		end if;
+    end process;
+	 
+	 shreg_proc : process(clk,rst)
+	 begin
+		if (rst = '0') then
+			cnt <= 0;
+			shreg <= (others => '0');
+		elsif rising_edge(clk) then
+			if (state = idle) then
+				shreg <= dts;
+				cnt <= 0;
+			elsif (state = data) then
+				shreg <= dts;
+				shreg <= '1' & shreg(7 downto 1);
+				if (cnt = 7) then
+					cnt <= 0;
+				else
+					cnt <= cnt + 1;
+				end if;
+			else
+				cnt <= 0;
+			end if;
+		end if;
+	 end process;
+	 
+	 out_proc : process(state,cnt,shreg)
+	 begin
+		case state is
+			when idle => tx_reg <= '1';
+			when start => tx_reg <= '0';
+			when data => tx_reg <= shreg(0);
+			when stop => tx_reg <= '1';
+			when others => tx_reg <= '1';
+		end case;
+	 end process;
+	 
+	 next_state_proc :process(state,input,cnt,dts,stop_char)
+	 begin
+		update_char <= '0';
+		case state is
+			when idle => 
+				if (input = '0' and stop_char = '0') then
+					next_state <= start;
+				else 
+					next_state <= idle;
+				end if;	
+			when start => next_state <= data;
+			when data => 
+				if (cnt = 7) then
+					next_state <= stop;
+				else
+					next_state <= data;
+				end if;
+			when stop => next_state <= idle;
+				update_char <= '1';
+			when others => next_state <= idle;
+		end case;
+	 end process;
+	
+end Behavioral;
+
