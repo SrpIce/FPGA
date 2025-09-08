@@ -1,0 +1,144 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    08:29:12 07/16/2025 
+-- Design Name: 
+-- Module Name:    blinkled - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity blinkled is
+    Port ( clk,rst,input : in  STD_LOGIC;
+           led0,led3 : out  STD_LOGIC);
+end blinkled;
+
+architecture Behavioral of blinkled is
+	type state_type is (off,a0,a1,a2,a3,a4,a5,a6,b1,b2,b3,b4,c1,c2,c3,c4,c5,c6,d1,d2,d3,d4,e1,e2,e3,e4,e5,e6);
+	signal state,next_state : state_type;
+	signal clkout : std_logic;
+	signal cnt : integer range 0 to 12499999;
+begin
+	clk_2_Hz : process(clk,cnt,rst)
+	begin 
+		if (rst = '0') then
+			cnt <= 0;
+			clkout <= '0';
+		else
+			if (rising_edge(clk)) then
+				if (cnt = 12499999) then
+					cnt <= 0;
+					clkout <= not clkout;
+				else
+					cnt <= cnt + 1;
+					clkout <= clkout;
+				end if;
+			end if;
+		end if;
+	end process;
+	led0 <= clkout;
+	
+	sync_proc : process(clkout,rst)
+	begin
+		if (rst = '0') then
+			state <= off ;
+		elsif (input = '1' and state = off) then
+			state <= next_state;
+		else 
+			if (rising_edge(clkout)) then
+				state <= next_state;
+			end if;
+		end if;
+	end process;
+	
+	state_proc : process(state)
+	begin
+		case state is
+			when off => led3 <= '0';
+			when a1 => led3 <= '1';
+			when a2 => led3 <= '1';
+			when a3 => led3 <= '1';
+			when a4 => led3 <= '1';
+			when a5 => led3 <= '1';
+			when a6 => led3 <= '1';
+			when b1 => led3 <= '0';
+			when b2 => led3 <= '0';
+			when b3 => led3 <= '0';
+			when b4 => led3 <= '0';
+			when c1 => led3 <= '1';
+			when c2 => led3 <= '1';
+			when c3 => led3 <= '1';
+			when c4 => led3 <= '1';
+			when c5 => led3 <= '1';
+			when c6 => led3 <= '1';
+			when d1 => led3 <= '0';
+			when d2 => led3 <= '0';
+			when d3 => led3 <= '0';
+			when d4 => led3 <= '0';
+			when e1 => led3 <= '1';
+			when e2 => led3 <= '1';
+			when e3 => led3 <= '1';
+			when e4 => led3 <= '1';
+			when e5 => led3 <= '1';
+			when e6 => led3 <= '1';
+			when others => led3 <= '0';
+		end case;
+	end process;
+	
+	next_state_pro : process(state)
+	begin
+		case state is
+			when off => next_state <= a1;
+			when a1 => next_state <= a2;
+			when a2 => next_state <= a3;
+			when a3 => next_state <= a4;
+			when a4 => next_state <= a5;
+			when a5 => next_state <= a6;
+			when a6 => next_state <= b1;
+			when b1 => next_state <= b2;
+			when b2 => next_state <= b3;
+			when b3 => next_state <= b4;
+			when b4 => next_state <= c1;
+			when c1 => next_state <= c2;
+			when c2 => next_state <= c3;
+			when c3 => next_state <= c4;
+			when c4 => next_state <= c5;
+			when c5 => next_state <= c6;
+			when c6 => next_state <= d1;
+			when d1 => next_state <= d2;
+			when d2 => next_state <= d3;
+			when d3 => next_state <= d4;
+			when d4 => next_state <= e1;
+			when e1 => next_state <= e2;
+			when e2 => next_state <= e3;
+			when e3 => next_state <= e4;
+			when e4 => next_state <= e5;
+			when e5 => next_state <= e6;
+			when e6 => next_state <= off;
+			when others => next_state <= off;
+		end case;
+	end process;
+end Behavioral;
+
