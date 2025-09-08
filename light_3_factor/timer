@@ -1,0 +1,73 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    09:14:34 07/30/2025 
+-- Design Name: 
+-- Module Name:    timer - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity timer is
+    Port ( clk,rst,tload,tsel : in  STD_LOGIC;
+           tdone : out  STD_LOGIC);
+end timer;
+
+architecture Behavioral of timer is
+	type state_type is (t5,t4,t3,t2,t1,t0);
+	signal timestate,next_timestate : state_type := t0;
+begin
+	sync_proc : process(clk, rst)
+    begin
+        if (rst = '0') then
+            timestate <= t0;
+        elsif (rising_edge(clk)) then
+            if tload = '1' then
+                if tsel = '1' then
+                    timestate <= t5;
+                else
+                    timestate <= t3;
+                end if;
+            else
+                case timestate is
+                    when t5 => timestate <= t4;
+                    when t4 => timestate <= t3;
+                    when t3 => timestate <= t2;
+                    when t2 => timestate <= t1;
+                    when t1 => timestate <= t0;
+                    when others => timestate <= t0;
+                end case;
+            end if;
+        end if;
+    end process;
+	 
+	 done_proc	: process(timestate)
+	 begin
+			case timestate is
+				when t0 	=> tdone <= '1';
+				when others => tdone <= '0';
+			end case;
+	 end process;
+end Behavioral;
+
