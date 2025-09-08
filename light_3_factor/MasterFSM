@@ -1,0 +1,119 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    07:49:00 07/30/2025 
+-- Design Name: 
+-- Module Name:    MasterFSM - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity MasterFSM is
+    Port ( input,clk,rst : in  STD_LOGIC;
+			  tdone,cdone : in  STD_LOGIC;
+			  tload,tsel,cload,cdec : out  STD_LOGIC;
+           output : out  STD_LOGIC);
+end MasterFSM;
+
+architecture Behavioral of MasterFSM is
+	type state_type is (off,flash,space);
+	signal state,next_state : state_type := off;
+	
+begin	
+	sync_proc : process(clk, rst)
+    begin
+        if (rst = '0') then
+            state <= off;
+        elsif (rising_edge(clk)) then
+            case state is
+                when off => 
+                    if (input = '1') and (cdone = '0') then  
+								state <= flash;
+                    end if;
+                    
+                when flash => 
+                    if (tdone = '1') then
+                        if (cdone = '1') then  
+                            state <= off;
+                        else
+                            state <= space;
+                        end if;
+                    end if;
+                    
+                when space => 
+                    if (tdone = '1') then
+                        state <= flash;
+                    end if;
+                    
+                when others => 
+                    state <= off;
+            end case;
+        end if;
+    end process;
+
+	
+	tload_proc : process(state,tdone)
+	begin
+		case state is
+			when off => tload <= '1';
+			when flash => tload <= tdone;
+			when space => tload <= tdone;
+			when others => tload <= '1';
+		end case;
+	end process;
+	
+	tsel_proc : process(state)
+	begin
+		case state is
+			when flash => tsel <= '0';
+			when others => tsel <= '1';
+		end case;
+	end process;
+	
+	cload_proc : process(state)
+	begin
+		case state is
+			when off => cload <= '1';
+			when others => cload <= '0';
+		end case;
+	end process;
+	
+	cdec_proc : process(state,tdone)
+	begin
+		case state is
+			when space => cdec <= tdone;
+			when others => cdec <= '0';
+		end case;
+	end process;
+	
+	output_proc : process(state)
+	begin
+		case state is
+			when flash => output <= '1';
+			when others => output <= '0';
+		end case;
+	end process;
+	
+end Behavioral;
+
